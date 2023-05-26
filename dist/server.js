@@ -21,26 +21,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/server.ts
 var import_fastify = __toESM(require("fastify"));
@@ -53,30 +33,28 @@ var import_client = require("@prisma/client");
 var prisma = new import_client.PrismaClient();
 
 // src/routes/auth.ts
-function authRoutes(app2) {
-  return __async(this, null, function* () {
-    app2.post("/register", (request) => __async(this, null, function* () {
-      const bodySchema = import_zod.z.object({
-        name: import_zod.z.string(),
-        email: import_zod.z.string(),
-        image: import_zod.z.string().url()
-      });
-      const { email, image, name } = bodySchema.parse(request.body);
-      let user = yield prisma.user.findUnique({
-        where: {
-          email
+async function authRoutes(app2) {
+  app2.post("/register", async (request) => {
+    const bodySchema = import_zod.z.object({
+      name: import_zod.z.string(),
+      email: import_zod.z.string(),
+      image: import_zod.z.string().url()
+    });
+    const { email, image, name } = bodySchema.parse(request.body);
+    let user = await prisma.user.findUnique({
+      where: {
+        email
+      }
+    });
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          image,
+          name
         }
       });
-      if (!user) {
-        user = yield prisma.user.create({
-          data: {
-            email,
-            image,
-            name
-          }
-        });
-      }
-    }));
+    }
   });
 }
 
@@ -85,42 +63,40 @@ var import_cors = __toESM(require("@fastify/cors"));
 
 // src/routes/posts.ts
 var import_zod2 = require("zod");
-function postRoutes(app2) {
-  return __async(this, null, function* () {
-    app2.get("/posts", (request) => __async(this, null, function* () {
-      const posts = yield prisma.post.findMany({
-        orderBy: {
-          createdAt: "desc"
-        },
-        include: {
-          user: true
-        }
-      });
-      return posts;
-    }));
-    app2.post("/posts", (request) => __async(this, null, function* () {
-      const bodySchema = import_zod2.z.object({
-        title: import_zod2.z.string(),
-        content: import_zod2.z.string(),
-        imageUrl: import_zod2.z.string(),
-        email: import_zod2.z.string()
-      });
-      const { content, imageUrl, title, email } = bodySchema.parse(request.body);
-      const getUser = yield prisma.user.findUniqueOrThrow({
-        where: {
-          email
-        }
-      });
-      const createPost = yield prisma.post.create({
-        data: {
-          content,
-          imageUrl,
-          title,
-          userId: getUser.id
-        }
-      });
-      return createPost;
-    }));
+async function postRoutes(app2) {
+  app2.get("/posts", async (request) => {
+    const posts = await prisma.post.findMany({
+      orderBy: {
+        createdAt: "desc"
+      },
+      include: {
+        user: true
+      }
+    });
+    return posts;
+  });
+  app2.post("/posts", async (request) => {
+    const bodySchema = import_zod2.z.object({
+      title: import_zod2.z.string(),
+      content: import_zod2.z.string(),
+      imageUrl: import_zod2.z.string(),
+      email: import_zod2.z.string()
+    });
+    const { content, imageUrl, title, email } = bodySchema.parse(request.body);
+    const getUser = await prisma.user.findUniqueOrThrow({
+      where: {
+        email
+      }
+    });
+    const createPost = await prisma.post.create({
+      data: {
+        content,
+        imageUrl,
+        title,
+        userId: getUser.id
+      }
+    });
+    return createPost;
   });
 }
 
@@ -131,7 +107,6 @@ app.register(postRoutes);
 app.register(import_cors.default, {
   origin: true
 });
-var _a;
 app.listen({
-  port: (_a = process.env.PORT) != null ? _a : 3333
+  port: process.env.PORT ? Number(process.env.PORT) : 3333
 }).then(() => console.log("server is running in port http://localhost:3333"));

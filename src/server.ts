@@ -13,6 +13,6 @@ app.register(cors, {
 
 app
   .listen({
-    port: process.env.PORT ?? 3333,
+    port: process.env.PORT ? Number(process.env.PORT) : 3333,
   })
   .then(() => console.log('server is running in port http://localhost:3333'))

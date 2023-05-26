@@ -16,26 +16,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-var __async = (__this, __arguments, generator) => {
-  return new Promise((resolve, reject) => {
-    var fulfilled = (value) => {
-      try {
-        step(generator.next(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var rejected = (value) => {
-      try {
-        step(generator.throw(value));
-      } catch (e) {
-        reject(e);
-      }
-    };
-    var step = (x) => x.done ? resolve(x.value) : Promise.resolve(x.value).then(fulfilled, rejected);
-    step((generator = generator.apply(__this, __arguments)).next());
-  });
-};
 
 // src/routes/posts.ts
 var posts_exports = {};
@@ -50,42 +30,40 @@ var prisma = new import_client.PrismaClient();
 
 // src/routes/posts.ts
 var import_zod = require("zod");
-function postRoutes(app) {
-  return __async(this, null, function* () {
-    app.get("/posts", (request) => __async(this, null, function* () {
-      const posts = yield prisma.post.findMany({
-        orderBy: {
-          createdAt: "desc"
-        },
-        include: {
-          user: true
-        }
-      });
-      return posts;
-    }));
-    app.post("/posts", (request) => __async(this, null, function* () {
-      const bodySchema = import_zod.z.object({
-        title: import_zod.z.string(),
-        content: import_zod.z.string(),
-        imageUrl: import_zod.z.string(),
-        email: import_zod.z.string()
-      });
-      const { content, imageUrl, title, email } = bodySchema.parse(request.body);
-      const getUser = yield prisma.user.findUniqueOrThrow({
-        where: {
-          email
-        }
-      });
-      const createPost = yield prisma.post.create({
-        data: {
-          content,
-          imageUrl,
-          title,
-          userId: getUser.id
-        }
-      });
-      return createPost;
-    }));
+async function postRoutes(app) {
+  app.get("/posts", async (request) => {
+    const posts = await prisma.post.findMany({
+      orderBy: {
+        createdAt: "desc"
+      },
+      include: {
+        user: true
+      }
+    });
+    return posts;
+  });
+  app.post("/posts", async (request) => {
+    const bodySchema = import_zod.z.object({
+      title: import_zod.z.string(),
+      content: import_zod.z.string(),
+      imageUrl: import_zod.z.string(),
+      email: import_zod.z.string()
+    });
+    const { content, imageUrl, title, email } = bodySchema.parse(request.body);
+    const getUser = await prisma.user.findUniqueOrThrow({
+      where: {
+        email
+      }
+    });
+    const createPost = await prisma.post.create({
+      data: {
+        content,
+        imageUrl,
+        title,
+        userId: getUser.id
+      }
+    });
+    return createPost;
   });
 }
 // Annotate the CommonJS export names for ESM import in node:
